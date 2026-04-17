@@ -1,5 +1,6 @@
 import json
 import re
+from concurrent.futures import ThreadPoolExecutor
 from io import BytesIO
 
 import matplotlib
@@ -179,9 +180,12 @@ def _add_ai_text(doc: Document, ai_text: str) -> None:
 # ── main entry point ──────────────────────────────────────────────────────────
 
 def generate_report(doelen: str, chart_data: dict) -> bytes:
-    ai_text = generate_ai_text(doelen, chart_data)
-    alternatives = generate_alternatives(doelen, chart_data)
-    pie_overview = _build_pie_overview(chart_data)
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        f_text = pool.submit(generate_ai_text, doelen, chart_data)
+        f_alt  = pool.submit(generate_alternatives, doelen, chart_data)
+        pie_overview = _build_pie_overview(chart_data)
+        ai_text      = f_text.result()
+        alternatives = f_alt.result()
 
     doc = Document()
 

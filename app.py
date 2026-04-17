@@ -288,11 +288,6 @@ if generate:
             "non_eu_products": non_eu_products,
             "vendor_overlap_per_category": vendor_overlap,
         }
-        charts = {
-            "type_product": pio.to_image(fig_type, format="png", scale=2),
-            "beursregio": pio.to_image(fig_regio, format="png", scale=2),
-            "productcategorie": pio.to_image(fig_cat, format="png", scale=2),
-        }
         st.session_state["rapport_bytes"] = generate_report(doelen, chart_data)
         st.success("Rapport gegenereerd!")
         st.rerun()
