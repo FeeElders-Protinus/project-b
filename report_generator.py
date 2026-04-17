@@ -7,6 +7,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
+import streamlit as st
 from openai import OpenAI
 from docx import Document
 from docx.oxml import OxmlElement
@@ -61,7 +62,7 @@ Sla producten over waarvoor geen goed alternatief bekend is. Gebruik je eigen ma
 # ── OpenAI calls ──────────────────────────────────────────────────────────────
 
 def _chat(system: str, user: str, max_tokens: int) -> str:
-    client = OpenAI()
+    client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
     response = client.chat.completions.create(
         model="gpt-4o",
         max_tokens=max_tokens,
