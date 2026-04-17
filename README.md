@@ -1,4 +1,4 @@
-# Project B
+# Project Customer Strategy Report
 
 We don't know the project yet, but to prepare ourselves as best as possible you can already do the setup below
 
