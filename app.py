@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-import plotly.io as pio
 from report_generator import generate_report
 
 st.set_page_config(page_title="Installed Base Dashboard", layout="wide", initial_sidebar_state="collapsed")
@@ -252,6 +251,30 @@ with input_col:
 
 if generate:
     with st.spinner("AI genereert analyse en rapport..."):
+        # Closed-source products for open-source alternative recommendations
+        cs_df = df[df["Type product"] == "Closed source"].dropna(subset=["Beschrijving"])
+        closed_source_products = cs_df[["Beschrijving", "Vendor", "Productcategorie"]].rename(
+            columns={"Beschrijving": "product", "Vendor": "vendor", "Productcategorie": "categorie"}
+        ).to_dict(orient="records")
+
+        # Non-EU products for EU-based alternative recommendations
+        non_eu_df = df[df["Beursregio"] != "EU"].dropna(subset=["Beschrijving"])
+        non_eu_products = non_eu_df[["Beschrijving", "Vendor", "Productcategorie", "Beursregio"]].rename(
+            columns={"Beschrijving": "product", "Vendor": "vendor", "Productcategorie": "categorie", "Beursregio": "regio"}
+        ).to_dict(orient="records")
+
+        # Per-category vendor breakdown for consolidation analysis
+        vendor_overlap = {}
+        for cat, grp in df.groupby("Productcategorie"):
+            vendors = (
+                grp.dropna(subset=["Vendor"])
+                .groupby("Vendor")["Beschrijving"]
+                .apply(list)
+                .to_dict()
+            )
+            if len(vendors) > 1:
+                vendor_overlap[str(cat)] = {str(k): v for k, v in vendors.items()}
+
         chart_data = {
             "type_product": df["Type product"].value_counts().to_dict(),
             "beursregio": df["Beursregio"].value_counts().to_dict(),
@@ -261,12 +284,15 @@ if generate:
                 "open_source_percentage": round(open_source_count / total * 100, 1),
                 "eu_percentage": round(eu_count / total * 100, 1),
             },
+            "closed_source_products": closed_source_products,
+            "non_eu_products": non_eu_products,
+            "vendor_overlap_per_category": vendor_overlap,
         }
         charts = {
             "type_product": pio.to_image(fig_type, format="png", scale=2),
             "beursregio": pio.to_image(fig_regio, format="png", scale=2),
             "productcategorie": pio.to_image(fig_cat, format="png", scale=2),
         }
-        st.session_state["rapport_bytes"] = generate_report(doelen, chart_data, charts)
+        st.session_state["rapport_bytes"] = generate_report(doelen, chart_data)
         st.success("Rapport gegenereerd!")
         st.rerun()
